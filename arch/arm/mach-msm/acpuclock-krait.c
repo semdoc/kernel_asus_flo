@@ -46,6 +46,112 @@
 
 #define SECCLKAGD		BIT(4)
 
+#define FREQ_TABLE_SIZE		46
+
+/** elementalx defs  **/
+
+int uv_bin = 0;
+uint32_t arg_max_oc0 = 1512000;
+uint32_t arg_max_oc1 = 1512000;
+uint32_t arg_max_oc2 = 1512000;
+uint32_t arg_max_oc3 = 1512000;
+
+/* boot arg max_oc */
+static int __init cpufreq_read_arg_max_oc0(char *max_oc0)
+{
+	unsigned long ui_khz;
+	int err;
+	err = strict_strtoul(max_oc0, 0, &ui_khz);
+	if (err) {
+		arg_max_oc0 = 1512000;
+		printk(KERN_INFO "[glitch]: max_oc0='%i'\n", arg_max_oc0);
+		return 1;
+	}
+
+	arg_max_oc0 = ui_khz;
+
+	return 0;
+}
+__setup("max_oc0=", cpufreq_read_arg_max_oc0);
+
+static int __init cpufreq_read_arg_max_oc1(char *max_oc1)
+{
+	unsigned long ui_khz;
+	int err;
+	err = strict_strtoul(max_oc1, 0, &ui_khz);
+	if (err) {
+		arg_max_oc1 = 1512000;
+		printk(KERN_INFO "[glitch]: max_oc1='%i'\n", arg_max_oc1);
+		return 1;
+	}
+
+	arg_max_oc1 = ui_khz;
+
+	return 0;
+}
+__setup("max_oc1=", cpufreq_read_arg_max_oc1);
+
+static int __init cpufreq_read_arg_max_oc2(char *max_oc2)
+{
+	unsigned long ui_khz;
+	int err;
+	err = strict_strtoul(max_oc2, 0, &ui_khz);
+	if (err) {
+		arg_max_oc2 = 1512000;
+		printk(KERN_INFO "[glitch]: max_oc2='%i'\n", arg_max_oc2);
+		return 1;
+	}
+
+	arg_max_oc2 = ui_khz;
+
+	return 0;
+}
+__setup("max_oc2=", cpufreq_read_arg_max_oc2);
+
+static int __init cpufreq_read_arg_max_oc3(char *max_oc3)
+{
+	unsigned long ui_khz;
+	int err;
+	err = strict_strtoul(max_oc3, 0, &ui_khz);
+	if (err) {
+		arg_max_oc3 = 1512000;
+		printk(KERN_INFO "[glitch]: max_oc3='%i'\n", arg_max_oc3);
+		return 1;
+	}
+
+	arg_max_oc3 = ui_khz;
+
+	return 0;
+}
+__setup("max_oc3=", cpufreq_read_arg_max_oc3);
+
+static int __init get_uv_level(char *vdd_uv)
+{
+	if (strcmp(vdd_uv, "0") == 0) {
+		uv_bin = 0;
+	} else if (strcmp(vdd_uv, "1") == 0) {
+		uv_bin = 1;
+	} else if (strcmp(vdd_uv, "2") == 0) {
+		uv_bin = 2;
+	} else if (strcmp(vdd_uv, "3") == 0) {
+		uv_bin = 3;
+	} else if (strcmp(vdd_uv, "4") == 0) {
+		uv_bin = 4;
+	} else if (strcmp(vdd_uv, "5") == 0) {
+		uv_bin = 5;
+	} else if (strcmp(vdd_uv, "6") == 0) {
+		uv_bin = 6;
+	} else {
+		uv_bin = 0;
+	}
+	return 0;
+}
+
+__setup("vdd_uv=", get_uv_level);
+
+/** end elementalx defs  **/
+
+
 static DEFINE_MUTEX(driver_lock);
 static DEFINE_SPINLOCK(l2_lock);
 
