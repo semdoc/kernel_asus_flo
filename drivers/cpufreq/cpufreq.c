@@ -868,8 +868,9 @@ static int cpufreq_add_dev_policy(unsigned int cpu,
 {
         int ret = 0;
 #ifdef CONFIG_SMP
-        unsigned long flags;
-        unsigned int j;
+	unsigned long flags;
+	unsigned int j;
+/*
 #ifdef CONFIG_HOTPLUG_CPU
         struct cpufreq_governor *gov;
 
@@ -890,58 +891,58 @@ static int cpufreq_add_dev_policy(unsigned int cpu,
         pr_debug("Restoring CPU%d min %d and max %d\n",
                 cpu, policy->min, policy->max);
 #endif
+*/
+	for_each_cpu(j, policy->cpus) {
+		struct cpufreq_policy *managed_policy;
 
-        for_each_cpu(j, policy->cpus) {
-                struct cpufreq_policy *managed_policy;
+		if (cpu == j)
+			continue;
 
-                if (cpu == j)
-                        continue;
+		/* Check for existing affected CPUs.
+		 * They may not be aware of it due to CPU Hotplug.
+		 * cpufreq_cpu_put is called when the device is removed
+		 * in __cpufreq_remove_dev()
+		 */
+		managed_policy = cpufreq_cpu_get(j);
+		if (unlikely(managed_policy)) {
 
-                /* Check for existing affected CPUs.
-                 * They may not be aware of it due to CPU Hotplug.
-                 * cpufreq_cpu_put is called when the device is removed
-                 * in __cpufreq_remove_dev()
-                 */
-                managed_policy = cpufreq_cpu_get(j);
-                if (unlikely(managed_policy)) {
+			/* Set proper policy_cpu */
+			unlock_policy_rwsem_write(cpu);
+			per_cpu(cpufreq_policy_cpu, cpu) = managed_policy->cpu;
 
-                        /* Set proper policy_cpu */
-                        unlock_policy_rwsem_write(cpu);
-                        per_cpu(cpufreq_policy_cpu, cpu) = managed_policy->cpu;
+			if (lock_policy_rwsem_write(cpu) < 0) {
+				/* Should not go through policy unlock path */
+				if (cpufreq_driver->exit)
+					cpufreq_driver->exit(policy);
+				cpufreq_cpu_put(managed_policy);
+				return -EBUSY;
+			}
 
-                        if (lock_policy_rwsem_write(cpu) < 0) {
-                                /* Should not go through policy unlock path */
-                                if (cpufreq_driver->exit)
-                                        cpufreq_driver->exit(policy);
-                                cpufreq_cpu_put(managed_policy);
-                                return -EBUSY;
-                        }
+			spin_lock_irqsave(&cpufreq_driver_lock, flags);
+			cpumask_copy(managed_policy->cpus, policy->cpus);
+			per_cpu(cpufreq_cpu_data, cpu) = managed_policy;
+			spin_unlock_irqrestore(&cpufreq_driver_lock, flags);
 
-                        spin_lock_irqsave(&cpufreq_driver_lock, flags);
-                        cpumask_copy(managed_policy->cpus, policy->cpus);
-                        per_cpu(cpufreq_cpu_data, cpu) = managed_policy;
-                        spin_unlock_irqrestore(&cpufreq_driver_lock, flags);
+			pr_debug("CPU already managed, adding link\n");
+			ret = sysfs_create_link(&dev->kobj,
+						&managed_policy->kobj,
+						"cpufreq");
+			if (ret)
+				cpufreq_cpu_put(managed_policy);
+			/*
+			 * Success. We only needed to be added to the mask.
+			 * Call driver->exit() because only the cpu parent of
+			 * the kobj needed to call init().
+			 */
+			if (cpufreq_driver->exit)
+				cpufreq_driver->exit(policy);
 
-                        pr_debug("CPU already managed, adding link\n");
-                        ret = sysfs_create_link(&dev->kobj,
-                                                &managed_policy->kobj,
-                                                "cpufreq");
-                        if (ret)
-                                cpufreq_cpu_put(managed_policy);
-                        /*
-                         * Success. We only needed to be added to the mask.
-                         * Call driver->exit() because only the cpu parent of
-                         * the kobj needed to call init().
-                         */
-                        if (cpufreq_driver->exit)
-                                cpufreq_driver->exit(policy);
-
-                        if (!ret)
-                                return 1;
-                        else
-                                return ret;
-                }
-        }
+			if (!ret)
+				return 1;
+			else
+				return ret;
+		}
+	}
 #endif
         return ret;
 }
@@ -1116,15 +1117,20 @@ static int cpufreq_add_dev(struct device *dev, struct subsys_interface *sif)
 
         /* Set governor before ->init, so that driver could check it */
 #ifdef CONFIG_HOTPLUG_CPU
-        for_each_online_cpu(sibling) {
-                struct cpufreq_policy *cp = per_cpu(cpufreq_cpu_data, sibling);
-                if (cp && cp->governor &&
-                    (cpumask_test_cpu(cpu, cp->related_cpus))) {
-                        policy->governor = cp->governor;
-                        found = 1;
-                        break;
-                }
-        }
+	for_each_online_cpu(sibling) {
+		struct cpufreq_policy *cp = per_cpu(cpufreq_cpu_data, sibling);
+		if (cp && cp->governor) {
+			policy->governor = cp->governor;
+			policy->min = cp->min;
+			policy->max = cp->max;
+			policy->user_policy.min = cp->user_policy.min;
+			policy->user_policy.max = cp->user_policy.max;
+
+			found = 1;
+			//pr_info("sibling: found sibling!\n");
+			break;
+		}
+	}
 #endif
         if (!found)
                 policy->governor = CPUFREQ_DEFAULT_GOVERNOR;
