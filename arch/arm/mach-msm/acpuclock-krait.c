@@ -46,7 +46,7 @@
 
 #define SECCLKAGD		BIT(4)
 
-#define FREQ_TABLE_SIZE		46
+#define FREQ_TABLE_SIZE		47
 
 /** elementalx defs  **/
 
