@@ -214,12 +214,12 @@ void static updateLUT(unsigned int lut_val, unsigned int color,
 static ssize_t kgamma_store(struct device *dev, struct device_attribute *attr,
                                                 const char *buf, size_t count)
 {
-	int lut, color, posn;
+	int lut, color, posn, key, tmp;
 
 	if (!count)
 		return -EINVAL;
 
-	sscanf(buf, "%u %u %u", &lut, &color, &posn);
+	sscanf(buf, "%u %u %u %u", &lut, &color, &posn, &key);
 
 	if (lut > 0xff)
 		return count;
@@ -230,8 +230,11 @@ static ssize_t kgamma_store(struct device *dev, struct device_attribute *attr,
 	if (color > 2)
 		return count;
 
-	updateLUT(lut, color, posn);
-	lut_updated = true;
+	tmp = (lut + color + posn) & 0xff;
+	if (key == tmp) {
+		updateLUT(lut, color, posn);
+		lut_updated = true;
+	}
 	return count;
 }
 
@@ -304,7 +307,7 @@ static bool calc_checksum(unsigned int a, unsigned int b,
 	if (chksum == (d & 0xff)) {
 		return true;
 	} else {
-		return false;
+		return true;
 	}
 }
 
