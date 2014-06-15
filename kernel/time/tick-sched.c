@@ -374,7 +374,7 @@ static ktime_t tick_nohz_stop_sched_tick(struct tick_sched *ts,
 		 * the scheduler tick in nohz_restart_sched_tick.
 		 */
 		if (!ts->tick_stopped) {
-			nohz_balance_enter_idle(cpu);
+			select_nohz_load_balancer(1);
 			calc_load_enter_idle();
 
 			ts->last_tick = hrtimer_get_expires(&ts->sched_timer);
@@ -527,7 +527,7 @@ void tick_nohz_irq_exit(void)
 
 	local_irq_save(flags);
 
-	__tick_nohz_idle_enter(ts);
+	tick_nohz_stop_sched_tick(ts);
 
 	local_irq_restore(flags);
 }
@@ -630,6 +630,35 @@ void tick_nohz_idle_exit(void)
 		tick_nohz_restart_sched_tick(ts, now);
 		tick_nohz_account_idle_ticks(ts);
 	}
+
+	/* Update jiffies first */
+	select_nohz_load_balancer(0);
+	tick_do_update_jiffies64(now);
+	update_cpu_load_nohz();
+
+#ifndef CONFIG_VIRT_CPU_ACCOUNTING
+	/*
+	 * We stopped the tick in idle. Update process times would miss the
+	 * time we slept as update_process_times does only a 1 tick
+	 * accounting. Enforce that this is accounted to idle !
+	 */
+	ticks = jiffies - ts->idle_jiffies;
+	/*
+	 * We might be one off. Do not randomly account a huge number of ticks!
+	 */
+	if (ticks && ticks < LONG_MAX)
+		account_idle_ticks(ticks);
+#endif
+
+	calc_load_exit_idle();
+	touch_softlockup_watchdog();
+	/*
+	 * Cancel the scheduled timer and restore the tick
+	 */
+	ts->tick_stopped  = 0;
+	ts->idle_exittime = now;
+
+	tick_nohz_restart(ts, now);
 
 	local_irq_enable();
 }

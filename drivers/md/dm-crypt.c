@@ -1236,7 +1236,7 @@ static int crypt_decode_key(u8 *key, char *hex, unsigned int size)
 	return 0;
 }
 
-static void crypt_free_tfms(struct crypt_config *cc)
+static void crypt_free_tfms(struct crypt_config *cc, int cpu)
 {
 	unsigned i;
 
@@ -1686,7 +1686,7 @@ static int crypt_map(struct dm_target *ti, struct bio *bio,
 }
 
 static void crypt_status(struct dm_target *ti, status_type_t type,
-			char *result, unsigned int maxlen)
+			 char *result, unsigned int maxlen)
 {
 	struct crypt_config *cc = ti->private;
 	unsigned i, sz = 0;

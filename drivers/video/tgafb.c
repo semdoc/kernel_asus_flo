@@ -1349,6 +1349,7 @@ tgafb_init_fix(struct fb_info *info)
 	if (!tga_type_name) {
 		tga_type_name = "Unknown";
 		memory_size = 16777216;
+		break;
 	}
 
 	strlcpy(info->fix.id, tga_type_name, sizeof(info->fix.id));

@@ -127,4 +127,3 @@ ENTRY(clmul_ghash_update)
 	movups DATA, (%rdi)
 .Lupdate_just_ret:
 	ret
-ENDPROC(clmul_ghash_update)

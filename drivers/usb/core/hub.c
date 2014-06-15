@@ -4204,7 +4204,7 @@ static void hub_events(void)
 					usb_lock_device(udev);
 					status = usb_reset_device(udev);
 					usb_unlock_device(udev);
-          connect_change = 0;
+					connect_change = 0;
 				}
 			}
 
