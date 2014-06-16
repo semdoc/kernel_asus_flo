@@ -101,7 +101,14 @@ extern void efi_call_phys_prelog(void);
 extern void efi_call_phys_epilog(void);
 extern void efi_unmap_memmap(void);
 
-#ifndef CONFIG_EFI
+#ifdef CONFIG_EFI
+
+static inline bool efi_is_native(void)
+{
+	return IS_ENABLED(CONFIG_X86_64) == efi_enabled(EFI_64BIT);
+}
+
+#else
 /*
  * IF EFI is not configured, have the EFI calls return -ENOSYS.
  */
