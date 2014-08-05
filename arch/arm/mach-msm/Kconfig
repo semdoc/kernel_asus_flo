@@ -1629,16 +1629,22 @@ config MSM_CPU_FREQ_MIN
 
 endif # CPU_FREQ_MSM
 
+config GPU_OVERCLOCK
+	bool "Enable GPU Overclocking option"
+	default n
+	help
+	  APQ8064 GPU overclocking
+
 config CPU_VOLTAGE_TABLE
 	bool "Enable CPU Voltage Table via sysfs for adjustements"
-	default y
+	default n
 	help
 	  Krait User Votlage Control 
 
 config GPU_VOLTAGE_TABLE
 	bool "Enable GPU Voltage Table via sysfs for adjustements"
 	depends on CPU_VOLTAGE_TABLE
-	default y
+	default n
 	help
 	  Adreno GPU User Voltage Control 
 
