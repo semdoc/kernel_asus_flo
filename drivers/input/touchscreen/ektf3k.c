@@ -923,7 +923,7 @@ static int check_fw_version(const unsigned char*firmware, unsigned int size, int
 
 }
 
-/* Reenable forced firmware update through sysfs */
+/*
 static ssize_t update_firmware(struct device *dev, struct device_attribute *devattr,const char *buf, size_t count)
 {
          struct i2c_client *client = to_i2c_client(dev);
@@ -949,37 +949,34 @@ static ssize_t update_firmware(struct device *dev, struct device_attribute *deva
        //start move the firmware file into memory
        firmware_fp->f_pos = 0;
        for(pos = 0, page_number = 0; pos < MAX_FIRMWARE_SIZE; pos += FIRMWARE_PAGE_SIZE, page_number++){
-	     if(firmware_fp->f_op->read(firmware_fp, firmware + pos,
-			FIRMWARE_PAGE_SIZE, &firmware_fp->f_pos) != FIRMWARE_PAGE_SIZE){
-	         break;
-	     }
-	 }
-	 filp_close(firmware_fp, NULL);
-	 // check the firmware ID and version
-	 // force into firmware updating
-	 if(RECOVERY || 1 /* check_fw_version(firmware, pos, ts->fw_ver ) */ > 0){
-	     touch_debug(DEBUG_INFO, "Firmware update start!\n");
-	     do{
-	          // reenable firmware update through sysfs by uncommenting following line
-	         ret = firmware_update_header(client, firmware, page_number);//add by mars
-	         touch_debug(DEBUG_INFO, "Firmware update finish ret=%d retry=%d !\n", ret, retry++);
-	     }while(ret != 0 && retry < 3);
-	     if(ret == 0 && RECOVERY) RECOVERY = 0;
-	 }else
-	     touch_debug(DEBUG_INFO, "No need to update firmware\n");
+             if(firmware_fp->f_op->read(firmware_fp, firmware + pos,
+                         FIRMWARE_PAGE_SIZE, &firmware_fp->f_pos) != FIRMWARE_PAGE_SIZE){
+                 break;
+             }
+         }
+         filp_close(firmware_fp, NULL);
+         // check the firmware ID and version
+         if(RECOVERY || check_fw_version(firmware, pos, ts->fw_ver) > 0){
+             touch_debug(DEBUG_INFO, "Firmware update start!\n");
+             do{
+//                 ret = firmware_update_header(client, firmware, page_number);//add by mars
+                 touch_debug(DEBUG_INFO, "Firmware update finish ret=%d retry=%d !\n", ret, retry++);
+             }while(ret != 0 && retry < 3);
+             if(ret == 0 && RECOVERY) RECOVERY = 0;
+         }else
+             touch_debug(DEBUG_INFO, "No need to update firmware\n");
 
-	 return count;
+         return count;
 }
-// Reenable forced firmware update through sysfs
-DEVICE_ATTR(update_fw,  S_IWUSR, NULL, update_firmware);
+*/
+//DEVICE_ATTR(update_fw,  S_IWUSR, NULL, update_firmware);
 
 
 static struct attribute *elan_attr[] = {
-	&dev_attr_elan_touchpanel_status.attr,
-	&dev_attr_vendor.attr,
-	&dev_attr_gpio.attr,
-// Renable forced firmware update through sysfs
-	&dev_attr_update_fw.attr,
+        &dev_attr_elan_touchpanel_status.attr,
+        &dev_attr_vendor.attr,
+        &dev_attr_gpio.attr,
+        //&dev_attr_update_fw.attr,
 /* sweep2wake sysfs */
 	&dev_attr_sweep2wake.attr,
 	&dev_attr_doubletap2wake.attr,
