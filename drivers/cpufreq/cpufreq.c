@@ -1820,83 +1820,83 @@ EXPORT_SYMBOL(cpufreq_get_policy);
 static int __cpufreq_set_policy(struct cpufreq_policy *data,
                                 struct cpufreq_policy *policy)
 {
-        int ret = 0;
+	int ret = 0;
 
-        pr_debug("setting new policy for CPU %u: %u - %u kHz\n", policy->cpu,
-                policy->min, policy->max);
+	pr_debug("setting new policy for CPU %u: %u - %u kHz\n", policy->cpu,
+		policy->min, policy->max);
 
-        memcpy(&policy->cpuinfo, &data->cpuinfo,
-                                sizeof(struct cpufreq_cpuinfo));
+	memcpy(&policy->cpuinfo, &data->cpuinfo,
+				sizeof(struct cpufreq_cpuinfo));
 
 	if (policy->min > data->user_policy.max
-                || policy->max < data->user_policy.min) {
-                ret = -EINVAL;
-                goto error_out;
-        }
+		|| policy->max < data->user_policy.min) {
+		ret = -EINVAL;
+		goto error_out;
+	}
 
-        /* verify the cpu speed can be set within this limit */
-        ret = cpufreq_driver->verify(policy);
-        if (ret)
-                goto error_out;
+	/* verify the cpu speed can be set within this limit */
+	ret = cpufreq_driver->verify(policy);
+	if (ret)
+		goto error_out;
 
-        /* adjust if necessary - all reasons */
-        blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
-                        CPUFREQ_ADJUST, policy);
+	/* adjust if necessary - all reasons */
+	blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
+			CPUFREQ_ADJUST, policy);
 
-        /* adjust if necessary - hardware incompatibility*/
-        blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
-                        CPUFREQ_INCOMPATIBLE, policy);
+	/* adjust if necessary - hardware incompatibility*/
+	blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
+			CPUFREQ_INCOMPATIBLE, policy);
 
-        /* verify the cpu speed can be set within this limit,
-           which might be different to the first one */
-        ret = cpufreq_driver->verify(policy);
-        if (ret)
-                goto error_out;
+	/* verify the cpu speed can be set within this limit,
+	   which might be different to the first one */
+	ret = cpufreq_driver->verify(policy);
+	if (ret)
+		goto error_out;
 
-        /* notification of the new policy */
-        blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
-                        CPUFREQ_NOTIFY, policy);
+	/* notification of the new policy */
+	blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
+			CPUFREQ_NOTIFY, policy);
 
-        data->min = policy->min;
-        data->max = policy->max;
+	data->min = policy->min;
+	data->max = policy->max;
 
-        pr_debug("new min and max freqs are %u - %u kHz\n",
-                                        data->min, data->max);
+	pr_debug("new min and max freqs are %u - %u kHz\n",
+					data->min, data->max);
 
-        if (cpufreq_driver->setpolicy) {
-                data->policy = policy->policy;
-                pr_debug("setting range\n");
-                ret = cpufreq_driver->setpolicy(policy);
-        } else {
-                if (policy->governor != data->governor) {
-                        /* save old, working values */
-                        struct cpufreq_governor *old_gov = data->governor;
+	if (cpufreq_driver->setpolicy) {
+		data->policy = policy->policy;
+		pr_debug("setting range\n");
+		ret = cpufreq_driver->setpolicy(policy);
+	} else {
+		if (policy->governor != data->governor) {
+			/* save old, working values */
+			struct cpufreq_governor *old_gov = data->governor;
 
-                        pr_debug("governor switch\n");
+			pr_debug("governor switch\n");
 
-                        /* end old governor */
-                        if (data->governor)
-                                __cpufreq_governor(data, CPUFREQ_GOV_STOP);
+			/* end old governor */
+			if (data->governor)
+				__cpufreq_governor(data, CPUFREQ_GOV_STOP);
 
-                        /* start new governor */
-                        data->governor = policy->governor;
-                        if (__cpufreq_governor(data, CPUFREQ_GOV_START)) {
-                                /* new governor failed, so re-start old one */
-                                pr_debug("starting governor %s failed\n",
-                                                        data->governor->name);
-                                if (old_gov) {
-                                        data->governor = old_gov;
-                                        __cpufreq_governor(data,
-                                                           CPUFREQ_GOV_START);
-                                }
-                                ret = -EINVAL;
-                                goto error_out;
-                        }
-                        /* might be a policy change, too, so fall through */
-                }
-                pr_debug("governor: change or update limits\n");
-                __cpufreq_governor(data, CPUFREQ_GOV_LIMITS);
-        }
+			/* start new governor */
+			data->governor = policy->governor;
+			if (__cpufreq_governor(data, CPUFREQ_GOV_START)) {
+				/* new governor failed, so re-start old one */
+				pr_debug("starting governor %s failed\n",
+							data->governor->name);
+				if (old_gov) {
+					data->governor = old_gov;
+					__cpufreq_governor(data,
+							   CPUFREQ_GOV_START);
+				}
+				ret = -EINVAL;
+				goto error_out;
+			}
+			/* might be a policy change, too, so fall through */
+		}
+		pr_debug("governor: change or update limits\n");
+		__cpufreq_governor(data, CPUFREQ_GOV_LIMITS);
+	}
 
 error_out:
         return ret;
