@@ -257,7 +257,7 @@ static void clear_APIC_ibs(void *dummy)
 		setup_APIC_eilvt(offset, 0, APIC_EILVT_MSG_FIX, 1);
 }
 
-static int __cpuinit
+static int
 #ifdef CONFIG_PM
 
 static int perf_ibs_suspend(void)
