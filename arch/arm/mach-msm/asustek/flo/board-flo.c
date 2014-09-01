@@ -2083,6 +2083,7 @@ static struct platform_device msm_tsens_device = {
 	.id = -1,
 };
 
+#ifdef CONFIG_BRICKED_THERMAL
 static struct msm_thermal_data msm_thermal_pdata = {
 	.sensor_id = 7,
 	.poll_ms = 150,
@@ -2100,6 +2101,7 @@ static struct msm_thermal_data msm_thermal_pdata = {
 	.allowed_low_low = 73,
 	.allowed_low_freq = 1350000,
 };
+#endif
 
 #define MSM_SHARED_RAM_PHYS 0x80000000
 static void __init apq8064_map_io(void)
@@ -3308,7 +3310,11 @@ static void __init apq8064_common_init(void)
 
 	platform_device_register(&msm_gpio_device);
 	msm_tsens_early_init(&apq_tsens_pdata);
+#ifdef CONFIG_BRICKED_THERMAL
 	msm_thermal_init(&msm_thermal_pdata);
+#else
+	msm_thermal_device_init(void);
+#endif
 	if (socinfo_init() < 0)
 		pr_err("socinfo_init() failed!\n");
 	BUG_ON(msm_rpm_init(&apq8064_rpm_data));
