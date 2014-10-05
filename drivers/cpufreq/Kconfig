@@ -110,11 +110,11 @@ config CPU_FREQ_DEFAULT_GOV_INTERACTIVE
 	  'interactive' governor for latency-sensitive workloads.
 
 config CPU_FREQ_DEFAULT_GOV_INTELLIDEMAND
-
 	bool "intellidemand"
 	select CPU_FREQ_GOV_INTELLIDEMAND
 	help
-	  Use the CPUFreq governor 'intellidemand' as default.
+	  Use the CPUFreq governor 'intellidemand' as default. This is
+	  based on Ondemand with browsing detection based on GPU loading
 
 config CPU_FREQ_DEFAULT_GOV_SMARTMAX
 	bool "smartmax"
