@@ -616,10 +616,7 @@ int rt6_route_rcv(struct net_device *dev, u8 *opt, int len,
 		prefix = &prefix_buf;
 	}
 
-	if (rinfo->prefix_len == 0)
-		rt = rt6_get_dflt_router(gwaddr, dev);
-	else
-		rt = rt6_get_route_info(dev, prefix, rinfo->prefix_len, gwaddr);
+	rt = rt6_get_route_info(dev, prefix, rinfo->prefix_len, gwaddr);
 
 	if (rt && !lifetime) {
 		ip6_del_rt(rt);
@@ -1969,6 +1966,7 @@ struct rt6_info *rt6_add_dflt_router(const struct in6_addr *gwaddr,
 	return rt6_get_dflt_router(gwaddr, dev);
 }
 
+
 int rt6_addrconf_purge(struct rt6_info *rt, void *arg) {
 	if (rt->rt6i_flags & (RTF_DEFAULT | RTF_ADDRCONF) &&
 	    (!rt->rt6i_idev || rt->rt6i_idev->cnf.accept_ra != 2))
@@ -2274,6 +2272,7 @@ static const struct nla_policy rtm_ipv6_policy[RTA_MAX+1] = {
 	[RTA_IIF]		= { .type = NLA_U32 },
 	[RTA_PRIORITY]          = { .type = NLA_U32 },
 	[RTA_METRICS]           = { .type = NLA_NESTED },
+	[RTA_UID]		= { .type = NLA_U32 },
 };
 
 static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
@@ -2585,6 +2584,11 @@ static int inet6_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr* nlh, void
 
 	if (tb[RTA_OIF])
 		oif = nla_get_u32(tb[RTA_OIF]);
+
+	if (tb[RTA_UID])
+		fl6.flowi6_uid = nla_get_u32(tb[RTA_UID]);
+	else
+		fl6.flowi6_uid = (iif ? (uid_t) -1 : current_uid());
 
 	if (iif) {
 		struct net_device *dev;
